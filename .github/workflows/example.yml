@@ -23,6 +23,7 @@ jobs:
           javac HelloWorld.java
           native-image HelloWorld
           ./helloworld
+          
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
