@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: jessiscript/setup-graalvm@latest
+      - uses: jessiscript/setup-graalvm@vq
         with:
           myToken: ${{ secrets.TOKEN }}
           java-version: '21'
