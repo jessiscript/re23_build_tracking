@@ -12,6 +12,7 @@ jobs:
 
       - uses: jessiscript/setup-graalvm@v1
         with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
