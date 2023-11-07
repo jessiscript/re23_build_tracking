@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: jessiscript/setup-graalvm@dc850bb2cbd0dbffcd7d9aa8c4e55a8af2ba12c5
+      - uses: jessiscript/setup-graalvm@main
         with:
           report-token: ${{ secrets.GITHUB_TOKEN }}
           java-version: '21'
