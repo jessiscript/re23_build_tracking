@@ -1,8 +1,8 @@
 name: GraalVM Native Image builds
 on: [push, pull_request, workflow_dispatch]
+permissions:
+  pull-requests: write
 jobs:
-  permissions:
-    pull-requests: write
   build:
     name: HelloWorld on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
