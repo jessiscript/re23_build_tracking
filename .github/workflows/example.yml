@@ -16,7 +16,7 @@ jobs:
 
       - name: Build and run HelloWorld.java
         run: |
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!");System.out.println("Hello, World!"); } }' > HelloWorld.java
           javac HelloWorld.java
           native-image HelloWorld
           ./helloworld
