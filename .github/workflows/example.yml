@@ -4,8 +4,8 @@ jobs:
   build:
     permissions:
       pull-requests: write
-    name: HelloWorld on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: HelloWorld on ubuntu-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
@@ -31,5 +31,5 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: helloworld-${{ matrix.os }}
+          name: helloworld-ubuntu-latest
           path: helloworld*
