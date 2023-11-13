@@ -6,15 +6,11 @@ jobs:
       pull-requests: write
     name: HelloWorld on ubuntu-latest
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
       - uses: jessiscript/setup-graalvm@main
         with:
-          report-token: ${{ secrets.GITHUB_TOKEN }}
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
