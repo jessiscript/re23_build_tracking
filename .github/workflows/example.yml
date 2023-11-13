@@ -2,15 +2,17 @@ name: GraalVM Native Image builds
 on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
-    permissions:
-      pull-requests: write
-    name: HelloWorld on ubuntu-latest
-    runs-on: ubuntu-latest
+    name: HelloWorld on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
       - uses: jessiscript/setup-graalvm@main
         with:
+          report-token: ${{ secrets.GITHUB_TOKEN }}
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -22,10 +24,10 @@ jobs:
           javac HelloWorld.java
           native-image HelloWorld
           ./helloworld
-          
+
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: helloworld-ubuntu-latest
+          name: helloworld-${{ matrix.os }}
           path: helloworld*
