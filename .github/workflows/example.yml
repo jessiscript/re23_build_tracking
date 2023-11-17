@@ -5,7 +5,7 @@ jobs:
     name: HelloWorld on windows-latest
     runs-on: windows-latest
     env:
-      working-directory: ./exampleproject
+      working-directory: ./example-project
     steps:
       - uses: actions/checkout@v4
 
