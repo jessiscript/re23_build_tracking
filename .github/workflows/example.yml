@@ -4,6 +4,8 @@ jobs:
   build:
     name: HelloWorld on windows-latest
     runs-on: windows-latest
+    env:
+      working-directory: ./exampleproject
     steps:
       - uses: actions/checkout@v4
 
@@ -15,12 +17,8 @@ jobs:
           native-image-job-reports: 'true'
           native-image-pr-reports: 'true'
 
-      - name: Build and run HelloWorld.java
-        run: |
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
-          javac HelloWorld.java
-          native-image HelloWorld
-          ./helloworld
+      - name: Build and run exampleProject
+        run: mvn -Pnative package
 
 
       - name: Upload binary
