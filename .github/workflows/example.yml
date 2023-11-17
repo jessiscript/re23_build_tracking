@@ -4,8 +4,6 @@ jobs:
   build:
     name: HelloWorld on windows-latest
     runs-on: windows-latest
-    env:
-      working-directory: ./example-project
     steps:
       - uses: actions/checkout@v4
 
@@ -18,6 +16,7 @@ jobs:
           native-image-pr-reports: 'true'
 
       - name: Build and run exampleProject
+        working-directory: ./example-project
         run: mvn -Pnative package
 
 
