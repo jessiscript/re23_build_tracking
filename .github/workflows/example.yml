@@ -26,7 +26,7 @@ jobs:
       - name: Build and run exampleProject
         run: |
           mvn -Pnative package
-          native-image \target\example-project-0.0.1-SNAPSHOT
+          native-image \a\re23_build_tracking\re23_build_tracking\example-project\target\example-project-0.0.1-SNAPSHOT
 
 
       - name: Upload binary
