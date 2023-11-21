@@ -26,7 +26,7 @@ jobs:
       - name: Build and run exampleProject
         run: |
           mvn -Pnative package
-          native-image exampleProject
+          native-image example-project
 
 
       - name: Upload binary
