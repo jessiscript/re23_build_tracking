@@ -24,7 +24,9 @@ jobs:
           java --version
           native-image --version
       - name: Build and run exampleProject
-        run: mvn -Pnative package
+        run: |
+          mvn -Pnative package
+          native-image exampleProject
 
 
       - name: Upload binary
