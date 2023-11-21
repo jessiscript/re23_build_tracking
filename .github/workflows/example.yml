@@ -6,7 +6,7 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        working-directory: ./example-project
+        working-directory: ./game-of-life-native
     steps:
       - uses: actions/checkout@v4
 
@@ -23,14 +23,13 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
           java --version
           native-image --version
-      - name: Build and run exampleProject
-        run: |
-          mvn -Pnative package
-          native-image -classpath D:\a\re23_build_tracking\re23_build_tracking\example-project\target ExampleProjectApplication
-
+      - name: Build and run game of life
+        run: mvn -Pnative package
+      - name: Build native image
+        run: native-image -cp target\game-of-life-1.0.0-SNAPSHOT.jar gameoflife.Main
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: helloworld-windows-latest
+          name: GameOfLife-latest
           path: example-project*
