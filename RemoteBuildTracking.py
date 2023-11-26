@@ -15,8 +15,8 @@ def parse_args():
     parser.add_argument("owner", help="Username of the GitHub repository owner")
     parser.add_argument("repo_path", help="Path to your GitHub repository")
     parser.add_argument("branch", help="Name of the branch")
-    parser.add_argument("n", help="Last n commits")
     parser.add_argument("token", help="Your personal access token")
+    parser.add_argument("n", nargs="?", default="10", help="Last n commits (default is 10)") 
 
     return parser.parse_args()
 
@@ -36,26 +36,28 @@ def get_response(url, token):
         return json.loads(response.content)
     return None
 
-def get_image_size(commit_sha):
+def get_image_data(commit_sha):
     data = get_response('https://api.github.com/repos/' + owner + '/' + repo_path + '/git/ref/graalvm-metrics/' + commit_sha, token)
     if data != None:
         ref_sha = data.get("object").get("sha")
     else:
-        return 0
+        return [0, 0, 0]
 
     data = get_response('https://api.github.com/repos/' + owner + '/' + repo_path + '/git/trees/' + ref_sha, token)
     if data != None:
         blob_sha = data.get("tree")[0].get("sha")
     else:
-        return 0
+        return [0, 0, 0]
 
     data = get_response('https://api.github.com/repos/' + owner + '/' + repo_path + '/git/blobs/' + blob_sha, token)
     if data != None:
         content = base64.b64decode(data.get("content"))
         data = json.loads(content)
-        return data.get("image_details").get("total_bytes")
+        return [data.get("image_details").get("total_bytes") / 1e6, 
+                data.get("image_details").get("code_area").get("bytes") / 1e6,
+                data.get("image_details").get("image_heap").get("bytes") / 1e6]
     else:
-        return 0
+        return [0, 0, 0]
     
 def format_date(date):
     # Parse the timestamp and convert it to the desired timezone
@@ -82,7 +84,7 @@ if __name__ == "__main__":
 
     try:  
 
-        response = urlfetch.get('https://api.github.com/repos/jessiscript/' + repo_path + '/events', headers={
+        response = urlfetch.get('https://api.github.com/repos/' + owner + '/' + repo_path + '/events', headers={
             "Authorization": "Bearer " + token
         })
         link_header = response.headers.get("link")
@@ -131,10 +133,17 @@ if __name__ == "__main__":
 
         # Extract data for plotting
         commit_dates = [format_date(timestamp) for timestamp in timestamps]
-        image_sizes = [get_image_size(sha) / 1e6 for sha in shas]
+        image_data = [get_image_data(sha) for sha in shas]
+        #print(image_data)
+        image_sizes = [entry[0] for entry in image_data if entry != 0]
+        code_area_sizes = [entry[1] for entry in image_data if entry != 0]
+        image_heap_sizes = [entry[2] for entry in image_data if entry != 0]
 
         # Create a DataFrame for Seaborn
-        image_data = pd.DataFrame({"Commit Dates": list(reversed(commit_dates)), "Image Size (MB)": list(reversed(image_sizes))})
+        image_data = pd.DataFrame({"Commit Dates": list(reversed(commit_dates)), 
+                                   "Image Size (MB)": list(reversed(image_sizes)), 
+                                   "Code Area Size (MB)": list(reversed(code_area_sizes)),
+                                   "Image Heap Size (MB)": list(reversed(image_heap_sizes))})
 
         # Formatting Y-axis tick labels to display in MB
         def format_mb(x, _):
@@ -151,6 +160,8 @@ if __name__ == "__main__":
         # Create a Seaborn point plot
         sns.set_theme(style="darkgrid")
         sns.pointplot(x="Commit Dates", y="Image Size (MB)", data=image_data)
+        sns.pointplot(x="Commit Dates", y="Code Area Size (MB)", data=image_data)
+        sns.pointplot(x="Commit Dates", y="Image Heap Size (MB)", data=image_data)
         plt.xlabel("Commit Dates")
         plt.ylabel("Image Size in MB")
         plt.title("Development of Native Image Sizes")
