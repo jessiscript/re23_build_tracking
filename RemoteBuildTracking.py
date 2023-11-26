@@ -59,13 +59,16 @@ def get_image_data(commit_sha):
     else:
         return [0, 0, 0]
     
-def format_date(date):
+def format_date(date, n):
     # Parse the timestamp and convert it to the desired timezone
     commit_time = parser.isoparse(date)
     commit_time_utc = commit_time.replace(tzinfo=pytz.utc)
     desired_timezone = pytz.timezone('Europe/Berlin')
     commit_time_local = commit_time_utc.astimezone(desired_timezone)
-    return commit_time_local.strftime('%d.%m.%Y \n %H:%M')
+    if n>=30:
+        return commit_time_local.strftime('%d.%m.\%H:%M')
+    else: 
+        return commit_time_local.strftime('%d.%m.%Y \n %H:%M')
 
 if __name__ == "__main__":
     args = parse_args()
@@ -132,18 +135,17 @@ if __name__ == "__main__":
             shas.append(push_event.get("payload").get("commits")[-1].get("sha"))
 
         # Extract data for plotting
-        commit_dates = [format_date(timestamp) for timestamp in timestamps]
+        commit_dates = [format_date(timestamp, n) for timestamp in timestamps]
         image_data = [get_image_data(sha) for sha in shas]
-        #print(image_data)
         image_sizes = [entry[0] for entry in image_data if entry != 0]
         code_area_sizes = [entry[1] for entry in image_data if entry != 0]
         image_heap_sizes = [entry[2] for entry in image_data if entry != 0]
 
         # Create a DataFrame for Seaborn
-        image_data = pd.DataFrame({"Commit Dates": list(reversed(commit_dates)), 
-                                   "Image Size (MB)": list(reversed(image_sizes)), 
-                                   "Code Area Size (MB)": list(reversed(code_area_sizes)),
-                                   "Image Heap Size (MB)": list(reversed(image_heap_sizes))})
+        image_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
+                                    "Image Size": list(reversed(image_sizes)), 
+                                    "Code Area Size": list(reversed(code_area_sizes)),
+                                    "Image Heap Size": list(reversed(image_heap_sizes))})
 
         # Formatting Y-axis tick labels to display in MB
         def format_mb(x, _):
@@ -153,18 +155,29 @@ if __name__ == "__main__":
         # Set the size of the figure
         plt.figure(figsize=(15, 11))  
 
+        sns.set_theme(style="whitegrid")
+
         # Rotate x-axis labels for better readability
         if n > 10:
             plt.xticks(rotation=45)
+        if n > 30:
+            plt.xticks(rotation=90)
+
+        # Melt the DataFrame to use 'hue' for Seaborn
+        image_data_melted = pd.melt(image_data, id_vars=["Commit Dates"], var_name="Size Type", value_name="Size (MB)")
 
         # Create a Seaborn point plot
-        sns.set_theme(style="darkgrid")
-        sns.pointplot(x="Commit Dates", y="Image Size (MB)", data=image_data)
-        sns.pointplot(x="Commit Dates", y="Code Area Size (MB)", data=image_data)
-        sns.pointplot(x="Commit Dates", y="Image Heap Size (MB)", data=image_data)
+        sns.pointplot(x="Commit Dates", y="Size (MB)", hue="Size Type", data=image_data_melted)
         plt.xlabel("Commit Dates")
-        plt.ylabel("Image Size in MB")
+        plt.ylabel("Size in MB")
         plt.title("Development of Native Image Sizes")
+
+        # Add vertical grid lines
+        sns.despine(left=True, bottom=True)
+        plt.grid(axis='x', linestyle='--', alpha=1)
+
+        # Add a legend
+        plt.legend(title="Size Type")
 
         # Save the plot as a .png file
         plt.savefig("output_plot.png")
