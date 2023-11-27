@@ -13,6 +13,10 @@ jobs:
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
+          native-image-metric-history: 'true'
+          build-counts-for-metric-history: 'true'
+          native-image-pr-comparison: 'true'
+
 
       - name: Build and run HelloWorld.java
         run: |
