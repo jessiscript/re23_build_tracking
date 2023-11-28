@@ -16,7 +16,8 @@ jobs:
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
-          native-image-pr-reports: 'true'
+          native-image-metric-history: 'true'
+          build-counts-for-metric-history: '20'
           native-image-pr-comparison: 'true'
       - name: Example step
         run: |
