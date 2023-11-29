@@ -14,7 +14,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
           native-image-metric-history: 'true'
-          build-counts-for-metric-history: '5'
+          build-counts-for-metric-history: '30'
           native-image-pr-comparison: 'true'
 
 
