@@ -1,5 +1,7 @@
 package gameoflife;
 
+import com.google.gson.Gson;
+
 import java.lang.management.ManagementFactory;
 import java.util.function.Consumer;
 
@@ -20,6 +22,7 @@ public class CountingOutput implements Consumer<boolean[][]> {
         if ((steps & 0xf) == 0) {
             System.out.print(".");
         }
+        Gson gson = new Gson();
         if (steps == WARMUP_STEPS) {
             System.out.printf("%nStarting timer");
             timingStartNanos = System.nanoTime();
