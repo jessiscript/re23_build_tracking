@@ -4,6 +4,9 @@ jobs:
   build:
     name: HelloWorld on windows-latest
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./game-of-life-native
     steps:
       - uses: actions/checkout@v4
 
@@ -16,18 +19,19 @@ jobs:
           native-image-metric-history: 'true'
           build-counts-for-metric-history: '30'
           native-image-pr-comparison: 'true'
-
-
-      - name: Build and run HelloWorld.java
+      - name: Example step
         run: |
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!");System.out.println("Hello, World!"); } }' > HelloWorld.java
-          javac HelloWorld.java
-          native-image HelloWorld
-          ./helloworld
-
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
+          echo "JAVA_HOME: $JAVA_HOME"
+          java --version
+          native-image --version
+      - name: Build and run game of life
+        run: mvn -Pnative package
+      - name: Build native image
+        run: native-image -cp target\game-of-life-1.0.0-SNAPSHOT.jar gameoflife.Main
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: helloworld-windows-latest
-          path: helloworld*
+          name: GameOfLife-latest
+          path: example-project*
