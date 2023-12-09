@@ -19,19 +19,15 @@ jobs:
           native-image-metric-history: 'true'
           build-counts-for-metric-history: '30'
           native-image-pr-comparison: 'true'
-      - name: Example step
-        run: |
-          echo "GRAALVM_HOME: $GRAALVM_HOME"
-          echo "JAVA_HOME: $JAVA_HOME"
-          java --version
-          native-image --version
-      - name: Build and run game of life
-        run: mvn -Pnative package
-      - name: Build native image
-        run: native-image -cp target\game-of-life-1.0.0-SNAPSHOT.jar gameoflife.Main
+      - name: Build and run HelloWorld.java
+          run: |
+            echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
+            javac HelloWorld.java
+            native-image HelloWorld
+            ./helloworld
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: GameOfLife-latest
-          path: example-project*
+          name: helloworld-${{ matrix.os }}
+          path: helloworld*
