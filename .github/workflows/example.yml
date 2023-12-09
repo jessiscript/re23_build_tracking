@@ -19,12 +19,13 @@ jobs:
           native-image-metric-history: 'true'
           build-counts-for-metric-history: '30'
           native-image-pr-comparison: 'true'
+          native-image-pr-reports: 'true'
       - name: Build and run HelloWorld.java
-          run: |
-            echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
-            javac HelloWorld.java
-            native-image HelloWorld
-            ./helloworld
+        run: |
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
+          javac HelloWorld.java
+          native-image HelloWorld
+          ./helloworld
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
