@@ -1,9 +1,6 @@
 <!-- index.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <title>SVG Chart</title>
-</head>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg>
 <body>
 
   <!-- Include the SVG content here -->
