@@ -25,13 +25,32 @@ def get_blob_data(n):
 def get_commits(n):
     return n.resolve().peel()
 
-def get_image_data(n):
+def get_image_details_data(n):
     n = n.decode()
     n = "[" + n + "]"
     image_data = json.loads(n) 
     return image_data[0].get("image_details")
 
-def get_build_data(repo_path, n, branch_name):
+def create_image_details_data_frame(blob_data, commit_dates, n):
+    raw_image_data = [get_image_details_data(entry) for entry in blob_data]
+    image_sizes = [entry.get("total_bytes") for entry in raw_image_data if entry != 0]
+    code_area_sizes = [entry.get("code_area").get("bytes") for entry in raw_image_data if entry != 0]
+    image_heap_sizes = [entry.get("image_heap").get("bytes") for entry in raw_image_data if entry != 0]
+    other = []
+    for i in range (0, n):
+        other.append(int(image_sizes[i])-int(code_area_sizes[i])-int(image_heap_sizes[i]))
+    
+
+    # Create a DataFrame for Seaborn
+    image_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
+                                "Image Size": list(reversed(image_sizes)), 
+                                "Code Area Size": list(reversed(code_area_sizes)),
+                                "Image Heap Size": list(reversed(image_heap_sizes)),
+                                "Other": list(reversed(other))})
+
+    return image_data
+
+def create_data_frame(repo_path, n, branch_name):
     N = n
     repo = pygit2.Repository(repo_path)
     branch = repo.branches.get(branch_name)
@@ -69,23 +88,8 @@ def get_build_data(repo_path, n, branch_name):
         timestr = dt.strftime('%d.%m.%Y \n %H:%M')
         commit_dates.append(timestr)
 
-    raw_image_data = [get_image_data(entry) for entry in blob_data]
-    image_sizes = [entry.get("total_bytes") for entry in raw_image_data if entry != 0]
-    code_area_sizes = [entry.get("code_area").get("bytes") for entry in raw_image_data if entry != 0]
-    image_heap_sizes = [entry.get("image_heap").get("bytes") for entry in raw_image_data if entry != 0]
-    other = []
-    for i in range (0, N):
-        other.append(int(image_sizes[i])-int(code_area_sizes[i])-int(image_heap_sizes[i]))
+    return create_image_details_data_frame(blob_data, commit_dates, N)
     
-
-    # Create a DataFrame for Seaborn
-    image_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
-                                "Image Size": list(reversed(image_sizes)), 
-                                "Code Area Size": list(reversed(code_area_sizes)),
-                                "Image Heap Size": list(reversed(image_heap_sizes)),
-                                "Other": list(reversed(other))})
-
-    return image_data
 
     
 def format_date(date):
@@ -100,7 +104,7 @@ if __name__ == "__main__":
 
     try:  
     
-        image_data = get_build_data(repo_path, int(n), branch)
+        image_data = create_data_frame(repo_path, int(n), branch)
 
         print(image_data)
 
