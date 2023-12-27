@@ -58,6 +58,9 @@ def get_build_data(repo_path, n, branch_name):
     
     blob_data = map(get_blob_data, metrics_refs)
 
+    #for datum in blob_data:
+    #    print(datum)
+
     # Extract data for plotting
     commit_dates = []
     for commit in metrics_commits:
