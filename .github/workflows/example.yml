@@ -1,5 +1,16 @@
 name: GraalVM Native Image builds
 on: [push, pull_request, workflow_dispatch]
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  deployments: write
+  issues: write
+  packages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
 jobs:
   build:
     name: HelloWorld on windows-latest
