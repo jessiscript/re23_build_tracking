@@ -26,6 +26,7 @@ jobs:
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
           native-image-job-reports: 'true'
           native-image-metric-history: 'true'
           build-counts-for-metric-history: '30'
