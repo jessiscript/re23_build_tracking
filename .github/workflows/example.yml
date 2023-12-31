@@ -1,16 +1,5 @@
 name: GraalVM Native Image builds
 on: [push, pull_request, workflow_dispatch]
-permissions:
-  actions: write
-  checks: write
-  contents: write
-  deployments: write
-  issues: write
-  packages: write
-  pull-requests: write
-  repository-projects: write
-  security-events: write
-  statuses: write
 jobs:
   build:
     name: HelloWorld on windows-latest
@@ -26,10 +15,10 @@ jobs:
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          token: ${{ secrets.TOKEN }}
+          pat-token: ${{ secrets.TOKEN }}
           native-image-job-reports: 'true'
           native-image-metric-history: 'true'
-          build-counts-for-metric-history: '30'
+          build-counts-for-metric-history: '5'
           native-image-pr-comparison: 'true'
           native-image-pr-reports: 'true'
       - name: Build and run HelloWorld.java
