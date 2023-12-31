@@ -21,7 +21,8 @@ jobs:
           build-counts-for-metric-history: '5'
           native-image-pr-comparison: 'true'
           native-image-pr-reports: 'true'
-      - name: Build and run HelloWorld.java
+          native-image-metric-history: 'true'
+      - name: Example step
         run: |
           echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
           javac HelloWorld.java
