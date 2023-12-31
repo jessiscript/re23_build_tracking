@@ -18,6 +18,7 @@ Usage: python3 LocalBuildTracking.py [repo_path] [branch] [amount of builds] [me
 Example: python3 LocalBuildTracking.py . main 15 analysis_results
             -> creates .pdf file
 Example: python3 LocalBuildTracking.py . main 40 image_details  
+            -> creates .png file
 '''
 
 def parse_args():
@@ -173,6 +174,7 @@ def generate_graph(build_data, metrics_type, n):
         plt.grid(axis='x', linestyle='--', alpha=1)
         # Save the plot as a .png file
         plt.savefig("native_image_details.png")
+        print("Successfully created 'native_image_details.png'")
 
 
     elif metrics_type == "analysis_results":
@@ -185,6 +187,7 @@ def generate_graph(build_data, metrics_type, n):
             create_analysis_results_subplot(pdf, 1, "Methods")
             create_analysis_results_subplot(pdf, 2, "Classes")
             create_analysis_results_subplot(pdf, 3, "Fields")
+            print("Successfully created 'native_image_build_analysis_results.pdf'")
     
 def rotate_x_labels(n):
     '''Rotate x-axis labels for better readability.'''
@@ -229,7 +232,7 @@ if __name__ == "__main__":
     try:  
         n = int(n)  
         build_data = create_data_frames(repo_path, n, branch, metrics_type)
-        print(build_data)
+        #print(build_data)
         generate_graph(build_data, metrics_type, n)         
 
     except Exception as e: 
