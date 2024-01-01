@@ -158,7 +158,7 @@ if __name__ == "__main__":
         sns.set_theme(style="whitegrid")
 
         # Rotate x-axis labels for better readability
-        if n > 10:
+        if n > 30:
             plt.xticks(rotation=45)
         if n > 30:
             plt.xticks(rotation=90)
