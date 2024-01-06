@@ -130,6 +130,8 @@ def create_data_frames(repo_path, n, branch_name, metrics_type):
         except KeyError as e:
             #skip as no build was created
             continue
+
+    print(metrics_commits)
     
     blob_data = map(get_blob_data, metrics_refs)
 
