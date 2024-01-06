@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument("repo_path", help="Path to your GitHub repository")
     parser.add_argument("branch", help="Name of the branch")
     parser.add_argument("n", help="Last n commits")
-    parser.add_argument("metrics_type", help="Type of metrics from the report to be visulized. Either 'image_detail', 'analysis_results', or 'resources'")
+    parser.add_argument("metrics_type", help="Type of metrics from the report to be visulized. Either 'image_details', 'analysis_results', or 'resource_usage'")
 
     return parser.parse_args()
 
@@ -36,26 +36,18 @@ def get_blob_data(n):
 def get_commits(n):
     return n.resolve().peel()
 
-def get_image_details(blob_data_entry):
+def get_metrics(blob_data_entry, metrics_type):
     '''Returns the image_details part from the blob data entry.'''
 
     blob_data_entry = blob_data_entry.decode()
     blob_data_entry = "[" + blob_data_entry + "]"
-    image_data = json.loads(blob_data_entry) 
-    return image_data[0].get("image_details")
+    metrics_data = json.loads(blob_data_entry) 
+    return metrics_data[0].get(metrics_type)
 
-def get_analysis_results(blob_data_entry):
-    '''Returns the analysis_results part from the blob data entry.'''
-
-    blob_data_entry = blob_data_entry.decode()
-    blob_data_entry = "[" + blob_data_entry + "]"
-    image_data = json.loads(blob_data_entry) 
-    return image_data[0].get("analysis_results")
-
-def create_image_details_data_frame(blob_data, commit_dates, n):
+def create_image_details_data_frame(blob_data, commit_dates, metrics_type, n):
     '''Creates pandas data frame for native image details.'''
 
-    raw_image_data = [get_image_details(entry) for entry in blob_data]
+    raw_image_data = [get_metrics(entry, metrics_type) for entry in blob_data]
     image_sizes = [entry.get("total_bytes") for entry in raw_image_data if entry != 0]
     code_area_sizes = [entry.get("code_area").get("bytes") for entry in raw_image_data if entry != 0]
     image_heap_sizes = [entry.get("image_heap").get("bytes") for entry in raw_image_data if entry != 0]
@@ -73,10 +65,10 @@ def create_image_details_data_frame(blob_data, commit_dates, n):
 
     return image_data
 
-def create_analysis_results_data_frames(blob_data, commit_dates, n):
+def create_analysis_results_data_frames(blob_data, commit_dates, metrics_type, n):
     '''Returns an array of pandas data frames for the visualization of native image build analysis results.'''
 
-    raw_analysis_results = [get_analysis_results(entry) for entry in blob_data]
+    raw_analysis_results = [get_metrics(entry, metrics_type) for entry in blob_data]
     types_data = create_single_ar_data_frame(raw_analysis_results, "types", commit_dates)
     methods_data = create_single_ar_data_frame(raw_analysis_results, "methods", commit_dates)
     classes_data = create_single_ar_data_frame(raw_analysis_results, "classes", commit_dates)
@@ -102,7 +94,27 @@ def create_single_ar_data_frame(analysis_results, aspect, commit_dates):
                                 "Reachable": list(reversed(reachable))
     })
 
+def create_resources_data_frame(blob_data, commit_dates, metrics_type, n):
+    '''Creates pandas data frame for native image details.'''
 
+    raw_resources_data = [get_metrics(entry, metrics_type) for entry in blob_data]
+    memory = [entry.get("memory") for entry in raw_resources_data if entry != 0]
+    peak_rss_bytes = [entry.get("peak_rss_bytes") for entry in memory if entry != 0]
+
+    gc = [entry.get("garbage_collection") for entry in raw_resources_data if entry != 0]
+    gc_time = [entry.get("total_secs") for entry in gc if entry != 0]
+    gc_count = [entry.get("count") for entry in gc if entry != 0]
+
+    # Create a DataFrame for Seaborn
+    peak_rss_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
+                                "Peak RSS": list(reversed(peak_rss_bytes)), })
+    
+    # Create a DataFrame for Seaborn
+    gc_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
+                                "GC Time": list(reversed(gc_time)), 
+                                "GC Count": list(reversed(gc_count))})
+
+    return [peak_rss_data, gc_data]
 
 def create_data_frames(repo_path, n, branch_name, metrics_type):
     '''Creates pandas data frames for visualization with seaborn. Requires user's arguments.'''
@@ -130,8 +142,6 @@ def create_data_frames(repo_path, n, branch_name, metrics_type):
         except KeyError as e:
             #skip as no build was created
             continue
-
-    print(metrics_commits)
     
     blob_data = map(get_blob_data, metrics_refs)
 
@@ -144,19 +154,19 @@ def create_data_frames(repo_path, n, branch_name, metrics_type):
         commit_dates.append(timestr)
 
     if metrics_type == "image_details":
-        return create_image_details_data_frame(blob_data, commit_dates, n)
+        return create_image_details_data_frame(blob_data, commit_dates, metrics_type, n)
     elif metrics_type == "analysis_results":
-        return create_analysis_results_data_frames(blob_data, commit_dates, n)
-
-    #return create_image_details_data_frame(blob_data, commit_dates, N)
+        return create_analysis_results_data_frames(blob_data, commit_dates, metrics_type, n)
+    elif metrics_type == "resource_usage":
+        return create_resources_data_frame(blob_data, commit_dates, metrics_type, n)
     
 def generate_graph(build_data, metrics_type, n):
-    '''Creates seaborn graph as .png file (image_details) or .pdf file (analysis_results). Requires the build data as pandas data frames as well as user's arguments.'''
+    '''Creates seaborn graph as .png file (image_details) or .pdf file (analysis_results, reource_usage). Requires the build data as pandas data frames as well as user's arguments.'''
 
-    # Melt the DataFrame to use 'hue' for Seaborn
+    # Distinguish between different metrics types to be plotted
     if metrics_type == "image_details":
 
-            # Formatting Y-axis tick labels to display in MB
+        # Formatting Y-axis tick labels to display in MB
         def format_mb(x, _):
             return f"{x:.0f} MB"
         plt.gca().yaxis.set_major_formatter(FuncFormatter(format_mb))
@@ -190,6 +200,53 @@ def generate_graph(build_data, metrics_type, n):
             create_analysis_results_subplot(pdf, 2, "Classes")
             create_analysis_results_subplot(pdf, 3, "Fields")
             print("Successfully created 'native_image_build_analysis_results.pdf'")
+
+    elif metrics_type == "resource_usage":
+        
+        # Create a PDF file
+        with PdfPages("native_image_build_resource_usage.pdf") as pdf:    
+            
+            sns.set_theme(style="whitegrid")
+            rotate_x_labels(n)
+            
+            #melted_data = pd.melt(build_data[1], id_vars=["Commit Dates"], var_name="variable", value_name="value")
+            # Create a figure and axis
+            fig, ax1 = plt.subplots(figsize=(18, 11))
+            sns.pointplot(x="Commit Dates", y="GC Count", data=build_data[1], color='orange', ax=ax1)
+            
+            # Create a second y-axis
+            ax2 = ax1.twinx()
+            # Plot the second dataset using the second y-axis (ax2)
+            sns.pointplot(x="Commit Dates", y="GC Time", data=build_data[1], ax=ax2, color='blue')
+           
+            #Set axis labels and title
+            plt.title("Garbage Collection")
+            ax1.set_xlabel('Commit Dates')
+            ax2.set_ylabel('GC Time (s)', color='blue')
+            ax1.set_ylabel('Count', color='orange')
+            # Add vertical dashed lines for each commit date
+            for commit_date in build_data[1]['Commit Dates']:
+                ax1.axvline(commit_date, color='lightgrey', linestyle='--', linewidth=1)
+            sns.despine(left=True, bottom=True)
+            plt.grid(axis='x', linestyle='--', alpha=1)
+            ax1.yaxis.grid(color='orange', linewidth=0.8)
+            pdf.savefig()
+            plt.close()
+
+            plt.figure(figsize=(18, 11))
+            rotate_x_labels(n)
+            # Formatting Y-axis tick labels to display in MB
+            def format_mb(x, _):
+                    return f"{x / 1e6:.0f} MB"
+            ax = sns.pointplot(x="Commit Dates", y="Peak RSS", data=build_data[0])
+            ax.yaxis.set_major_formatter(FuncFormatter(format_mb))
+            plt.title("Peak RSS in MB")
+            sns.despine(left=True, bottom=True)
+            plt.grid(axis='x', linestyle='--', alpha=1)
+            pdf.savefig()
+            plt.close()
+
+            print("Successfully created 'native_image_build_resource_usage.png'")
     
 def rotate_x_labels(n):
     '''Rotate x-axis labels for better readability.'''
@@ -204,8 +261,8 @@ def create_analysis_results_subplot(pdf, index, aspect):
 
     plt.figure(figsize=(18, 11))
     rotate_x_labels(n)
-    image_data_melted = pd.melt(build_data[index], id_vars=["Commit Dates"], var_name=aspect, value_name="Amount")
-    sns.pointplot(x="Commit Dates", y="Amount", hue=aspect, data=image_data_melted)
+    ar_data_melted = pd.melt(build_data[index], id_vars=["Commit Dates"], var_name=aspect, value_name="Amount")
+    sns.pointplot(x="Commit Dates", y="Amount", hue=aspect, data=ar_data_melted)
     plt.title("Analysis Results: " + aspect)
     sns.despine(left=True, bottom=True)
     plt.legend(title=aspect)
@@ -227,7 +284,7 @@ if __name__ == "__main__":
     n = args.n 
     metrics_type = args.metrics_type
 
-    if metrics_type not in ["image_details", "analysis_results", "resources"]:
+    if metrics_type not in ["image_details", "analysis_results", "resource_usage"]:
         print("Metrics type unknown. Valid options are 'image_details', 'analysis_results', or 'resources'")
         exit()
 
