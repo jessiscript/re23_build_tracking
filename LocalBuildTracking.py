@@ -37,7 +37,7 @@ def get_commits(n):
     return n.resolve().peel()
 
 def get_metrics(blob_data_entry, metrics_type):
-    '''Returns the image_details part from the blob data entry.'''
+    '''Returns the correct metrics part from the blob data entry.'''
 
     blob_data_entry = blob_data_entry.decode()
     blob_data_entry = "[" + blob_data_entry + "]"
@@ -207,12 +207,12 @@ def generate_graph(build_data, metrics_type, n):
         with PdfPages("native_image_build_resource_usage.pdf") as pdf:    
             
             sns.set_theme(style="whitegrid")
-            rotate_x_labels(n)
             
             #melted_data = pd.melt(build_data[1], id_vars=["Commit Dates"], var_name="variable", value_name="value")
             # Create a figure and axis
             fig, ax1 = plt.subplots(figsize=(18, 11))
             sns.pointplot(x="Commit Dates", y="GC Count", data=build_data[1], color='orange', ax=ax1)
+            rotate_x_labels(n)
             
             # Create a second y-axis
             ax2 = ax1.twinx()
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     metrics_type = args.metrics_type
 
     if metrics_type not in ["image_details", "analysis_results", "resource_usage"]:
-        print("Metrics type unknown. Valid options are 'image_details', 'analysis_results', or 'resources'")
+        print("Metrics type unknown. Valid options are 'image_details', 'analysis_results', or 'resource_usage'")
         exit()
 
     try:  
