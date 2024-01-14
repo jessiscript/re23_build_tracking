@@ -17,10 +17,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pat-token: ${{ secrets.TOKEN }}
           native-image-job-reports: 'true'
-          native-image-metric-history: 'true'
-          build-counts-for-metric-history: '10'
           native-image-pr-comparison: 'true'
-          native-image-pr-reports: 'true'
+          native-image-pr-comparison-parameter: 'analysis results, resource usage'
       - name: Example step
         run: |
           echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello, World!"); } }' > HelloWorld.java
