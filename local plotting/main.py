@@ -7,10 +7,12 @@ Fetch graalvm-metrics refs: git fetch origin 'refs/graalvm-metrics/*:refs/graalv
 
 Usage: python3 main.py [repo_path] [branch] [amount of builds] [metrics type]
 
-Example: python3 main.py .. main 15 analysis_results
-            -> creates .pdf file
-Example: python3 main.py .. main 40 image_details  
-            -> creates .pdf file
+Example: python3 main.py . main 15 analysis_results
+            -> show graph
+            -> creates analysis_results_{time}.html file
+Example: python3 main.py . test_branch 40 image_details  
+            -> show graph
+            -> creates image_details_{time}.html file
 '''
 
 def parse_args():
@@ -37,8 +39,7 @@ def main():
     try:  
         n = int(n)  
         build_data = load_data(repo_path, n, branch, metrics_type)
-        table_data = None
-        plot_data(build_data, metrics_type, n)         
+        plot_data(build_data, metrics_type)         
 
     except Exception as e: 
         print("The following exception returned: ", e)

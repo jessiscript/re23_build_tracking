@@ -1,153 +1,131 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-from matplotlib.ticker import FuncFormatter
+from datetime import datetime
+import plotly.graph_objects as go
+import plotly.subplots as sp
 from dateutil import parser
-from matplotlib.backends.backend_pdf import PdfPages
 
-def plot_data(build_data, metrics_type, n):
-    '''Creates seaborn graph as pdf file. Requires the build data as pandas data frames as well as user's arguments.'''
+def plot_data(build_data, metrics_type):
+    '''Creates plotly graph as html file. Requires the build data as pandas data frames as well as user's arguments.'''
+    # Get current date and time
+    current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
 
     # Distinguish between different metrics types to be plotted
     if metrics_type == "image_details":
-        
-        with PdfPages("native_image_details.pdf") as pdf:
-            # Formatting Y-axis tick labels to display in MB
-            def format_mb(x, _):
-                return f"{x:.0f} MB"
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(format_mb))
-            
-            # Set the size of the figure
-            plt.figure(figsize=(18, 11))  
-            sns.set_theme(style="whitegrid")
-            rotate_x_labels(n)
-            
-            image_data_melted = pd.melt(build_data["metrics"], id_vars=["Commit Dates"], var_name="Size Type", value_name="Size (MB)")
-            sns.scatterplot(x="Commit Dates", y="Size (MB)", hue="Size Type", data=image_data_melted)
-            plt.xlabel("Commit Dates")
-            plt.ylabel("Size in MB")
-            plt.title("Development of Native Image Sizes")
-            plt.ylim(bottom=0)
-            sns.despine(left=True, bottom=True)
-            plt.legend(title="Size Type")
-            plt.grid(axis='x', linestyle='--', alpha=1)
-            # Save the plot as a .png file
-            pdf.savefig()
-            plt.close()
-            generate_table(pdf, build_data["table"])
-            print("Successfully created 'native_image_details.pdf'")
 
+        fig = go.Figure()
+
+        # Add traces for teach dataset
+        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Image Size"], mode='markers', name='Image Size', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Total Image Size (MB):</b> %{y}')
+
+        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Code Area Size"], mode='markers', name='Code Area Size', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Code Area Size (MB):</b> %{y}')
+
+        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Image Heap Size"], mode='markers', name='Image Heap Size', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Image Heao Size (MB):</b> %{y}')
+
+        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Other"], mode='markers', name='Other', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Other (MB):</b> %{y}')
+        
+        # Customize layout
+        y_range = [-1, max(build_data["Image Size"]) + 1] 
+        fig.update_layout(title='Development of Native Image Sizes', xaxis_title='Commit Dates', yaxis_title='Size in MB', yaxis=dict(range=y_range))
+
+        # Show the interactive plot and save to html
+        fig.show()
+        fig.write_html("output/image_details_{}.html".format(current_datetime))
+        print("Successfully created 'image_details_{}.html' under local_plotting/output".format(current_datetime))
 
     elif metrics_type == "analysis_results":
-        # Create a PDF file
-        with PdfPages("native_image_build_analysis_results.pdf") as pdf:
-            plt.xlabel("Commit Dates")
-            plt.ylabel("Amount")  
-            sns.set_theme(style="whitegrid")
-            create_analysis_results_subplot(pdf, 0, "Types", n, build_data["metrics"])
-            create_analysis_results_subplot(pdf, 1, "Methods",n, build_data["metrics"])
-            create_analysis_results_subplot(pdf, 2, "Classes",n, build_data["metrics"] )
-            create_analysis_results_subplot(pdf, 3, "Fields",n, build_data["metrics"] )
-            generate_table(pdf, build_data["table"])
-            print("Successfully created 'native_image_build_analysis_results.pdf'")
+
+        # Create subplot grid with 2 rows and 2 columns
+        fig = sp.make_subplots(rows=2, cols=2, subplot_titles=['Types', 'Methods', 'Classes', 'Fields'])
+
+        # Create subplots
+        create_analysis_results_subplot(fig, 0, build_data)
+        create_analysis_results_subplot(fig, 1, build_data)
+        create_analysis_results_subplot(fig, 2, build_data)
+        create_analysis_results_subplot(fig, 3, build_data)
+
+        # Update y-axis range for each subplot
+        fig.update_yaxes(range=[-300, max(build_data[0]["Total"]) + 500], row=1, col=1)
+        fig.update_yaxes(range=[-3000, max(build_data[1]["Total"]) + 5000], row=1, col=2)
+        fig.update_yaxes(range=[-300, max(build_data[2]["Total"]) + 500], row=2, col=1)
+        fig.update_yaxes(range=[-300, max(build_data[3]["Total"]) + 500], row=2, col=2)
+
+        # Update layout 
+        fig.update_layout(title_text='Build Analysis Results', yaxis_title='Amount')
+        fig.show()
+        fig.write_html("output/analysis_results_{}.html".format(current_datetime))
+  
+        print("Successfully created 'analysis_results_{}.html' under local_plotting/output".format(current_datetime))
 
     elif metrics_type == "resource_usage":
+        # Create subplot grid with 2 rows and 2 columns
+        fig = sp.make_subplots(rows=2, cols=2, subplot_titles=['GC Time', 'GC Count', 'Peak RSS', 'CPU Load'])
+
+        # Create traces 
+        trace1 = go.Scatter(x=build_data["Commit Dates"], y=build_data["GC Time"], mode='markers', 
+                            name='GC Time', text=build_data[["Commit Message", "Commit Sha"]].values)
+        trace2 = go.Scatter(x=build_data["Commit Dates"], y=build_data["GC Count"], mode='markers', 
+                            name='GC Count', text=build_data[["Commit Message", "Commit Sha"]].values)
+        trace3 = go.Scatter(x=build_data["Commit Dates"], y=build_data["Peak RSS"], mode='markers', 
+                            name='Peak RSS', text=build_data[["Commit Message", "Commit Sha"]].values)
+        trace4 = go.Scatter(x=build_data["Commit Dates"], y=build_data["CPU Load"], mode='markers', 
+                            name='CPU Load', text=build_data[["Commit Message", "Commit Sha", "Total Cores"]].values)
         
-        # Create a PDF file
-        with PdfPages("native_image_build_resource_usage.pdf") as pdf:    
-            
-            sns.set_theme(style="whitegrid")
-            
-            #melted_data = pd.melt(build_data[1], id_vars=["Commit Dates"], var_name="variable", value_name="value")
-            # Create a figure and axis
-            fig, ax1 = plt.subplots(figsize=(15, 9))
-            sns.scatterplot(x="Commit Dates", y="GC Count", data=build_data["metrics"][1], color='orange', ax=ax1)
-            plt.ylim(bottom=0)
-            rotate_x_labels(n)
-            
-            # Create a second y-axis
-            ax2 = ax1.twinx()
-            # Plot the second dataset using the second y-axis (ax2)
-            sns.scatterplot(x="Commit Dates", y="GC Time", data=build_data["metrics"][1], ax=ax2, color='blue')
-           
-            #Set axis labels and title
-            plt.title("Garbage Collection")
-            ax1.set_xlabel('Commit Dates')
-            ax2.set_ylabel('GC Time (s)', color='blue')
-            ax1.set_ylabel('Count', color='orange')
-            # Add vertical dashed lines for each commit date
-            for commit_date in build_data["metrics"][1]['Commit Dates']:
-                ax1.axvline(commit_date, color='lightgrey', linestyle='--', linewidth=1)
-            plt.ylim(bottom=0)
-            sns.despine(left=True, bottom=True)
-            plt.grid(axis='x', linestyle='--', alpha=1)
-            ax1.yaxis.grid(color='orange', linewidth=0.8)
-            pdf.savefig()
-            plt.close()
+        fig.add_trace(trace1, row=1, col=1)
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>GC Time (s):</b> %{y}', row=1, col=1)
+        fig.add_trace(trace2, row=1, col=2)
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>GC Count:</b> %{y}', row=1, col=2)
+        fig.add_trace(trace3, row=2, col=1)
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Peak RSS (MB):</b> %{y}', row=2, col=1)
+        fig.add_trace(trace4, row=2, col=2)
+        fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>CPU Load:</b> %{y}<br><b>Total Cores:</b> %{text[2]}', row=2, col=2)
 
-            plt.figure(figsize=(15, 9))
-            rotate_x_labels(n)
-            # Formatting Y-axis tick labels to display in MB
-            def format_mb(x, _):
-                    return f"{x / 1e6:.0f} MB"
-            ax = sns.scatterplot(x="Commit Dates", y="Peak RSS", data=build_data["metrics"][0])
-            ax.yaxis.set_major_formatter(FuncFormatter(format_mb))
-            plt.title("Peak RSS in MB")
-            plt.ylim(bottom=0)
-            sns.despine(left=True, bottom=True)
-            plt.grid(axis='x', linestyle='--', alpha=1)
-            pdf.savefig()
-            plt.close()
+        # Update y-axis range for each subplot
+        fig.update_yaxes(range=[-0.5, max(build_data["GC Time"]) + 1], title_text="GC Time (s)", row=1, col=1)
+        fig.update_yaxes(range=[-30, max(build_data["GC Count"]) + 100],title_text="GC Count", row=1, col=2)
+        fig.update_yaxes(range=[-100, max(build_data["Peak RSS"]) + 100],title_text="Peak RSS (MB)", row=2, col=1)
+        fig.update_yaxes(range=[-0.5, max(build_data["CPU Load"]) + 1],title_text="CPU Load", row=2, col=2)
+        
+        # Update layout 
+        fig.update_layout(title_text='Resource Usage', showlegend=False)
+        fig.show()
+        fig.write_html("output/resource_usage_{}.html".format(current_datetime))
 
-            generate_table(pdf, build_data["table"])
+        print("Successfully created 'resource_usage_{}.html' under local_plotting/output".format(current_datetime))
 
-            print("Successfully created 'native_image_build_resource_usage.png'")
+def create_analysis_results_subplot(fig, index, build_data):
+    '''Create a sub plot showing the development of one native image build's analysis results aspect.'''
 
-def generate_table(pdf, table_data):
-    fig, ax = plt.subplots(figsize=(14, 10))
+    # Define colors for the traces
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
-    # hide axes
-    fig.patch.set_visible(False)
-    ax.axis('off')
+    # Create traces 
+    trace1_1 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["Total"], mode='markers', 
+                          name='Total', marker=dict(color=colors[0]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
+    trace1_2 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["Reflection"], mode='markers', 
+                          name='Reflection', marker=dict(color=colors[1]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
+    trace1_3 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["JNI"], mode='markers', 
+                          name='JNI', marker=dict(color=colors[2]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
+    trace1_4 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["Reachable"], mode='markers', 
+                          name='Reachable', marker=dict(color=colors[3]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
 
-    table = ax.table(cellText=table_data.values, colLabels=table_data.columns, loc='center')
+    # Determine row and col given index
+    row = 1 if index < 2 else 2
+    col = 1 if (index % 2) == 0 else 2
 
-    # Adjust font size
-    table.auto_set_font_size(False)
-    table.set_fontsize(10)  # Change the font size as needed
+    # Add traces to subplot
+    fig.add_trace(trace1_1, row=row, col=col)
+    fig.add_trace(trace1_2, row=row, col=col)
+    fig.add_trace(trace1_3, row=row, col=col)
+    fig.add_trace(trace1_4, row=row, col=col)
 
-    # Adjust cell padding
-    table.auto_set_column_width(col=list(range(len(table_data.columns))))
+    # Print only legend for first subplot as all subplots share the same attributes
+    if index == 0:
+        fig.update_traces(showlegend=True)
+    else:
+        fig.update_traces(showlegend=False, row=row, col=col)
 
-    fig.tight_layout()
-    pdf.savefig()
-    plt.close()
-    
-def rotate_x_labels(n):
-    '''Rotate x-axis labels for better readability.'''
-
-    if n > 10:
-        plt.xticks(rotation=45)
-    if n > 30:
-        plt.xticks(rotation=90)
-
-def create_analysis_results_subplot(pdf, index, aspect, n, build_data):
-    '''Create a pdf page with on seaborn line plot showing the development of one native image build's analysis results aspect.'''
-
-    plt.figure(figsize=(18, 11))
-    rotate_x_labels(n)
-    ar_data_melted = pd.melt(build_data[index], id_vars=["Commit Dates"], var_name=aspect, value_name="Amount")
-    sns.scatterplot(x="Commit Dates", y="Amount", hue=aspect, data=ar_data_melted)
-    plt.title("Analysis Results: " + aspect)
-    plt.ylim(bottom=0)
-    sns.despine(left=True, bottom=True)
-    plt.legend(title=aspect)
-    plt.grid(axis='x', linestyle='--', alpha=1)
-    pdf.savefig()
-    plt.close()
-
-
-def format_date(date):
-    '''Formats the x-Axis ticks accordingly.'''
-
-    return parser.isoparse(date).strftime('%Y-%m-%d \n %H:%M')
+    # Add hovertemplate
+    fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Amount:</b> %{y}')

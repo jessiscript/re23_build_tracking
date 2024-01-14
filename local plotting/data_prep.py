@@ -48,43 +48,36 @@ def load_data(repo_path, n, branch_name, metrics_type):
 
     # Extract data for plotting
     commit_dates = []
-    table_commit_dates = []
     commit_messages = []
     commit_shas = []
     for commit in metrics_commits:
         tzinfo  = timezone( timedelta(minutes=commit.author.offset) )
         dt = datetime.fromtimestamp(float(commit.author.time), tzinfo)
-        table_commit_dates.append(dt.strftime('%d.%m.%y, %H:%M'))
-        commit_dates.append(dt.strftime('%d.%m.%y \n %H:%M'))
+        commit_dates.append(dt.strftime('%d.%m.%y, %H:%M'))
         commit_messages.append(commit.message.strip())
-        commit_shas.append(commit.id)
-
-    table_dataframe = pd.DataFrame({"Commit Date" : table_commit_dates,
-                                    "Commit Sha" : commit_shas,
-                                    "Commit Message" : commit_messages})
-
-    metrics_dataframe = None
+        commit_shas.append(str(commit.id))
+   
+    data_frame = None
 
     if metrics_type == "image_details":
-        metrics_dataframe = create_image_details_data_frame(blob_data, commit_dates, metrics_type, n)
+        data_frame = create_image_details_data_frame(blob_data, commit_dates, commit_shas, commit_messages, metrics_type, n)
     elif metrics_type == "analysis_results":
-        metrics_dataframe = create_analysis_results_data_frames(blob_data, commit_dates, metrics_type, n)
+        data_frame = create_analysis_results_data_frames(blob_data, commit_dates, commit_shas, commit_messages, metrics_type, n)
     elif metrics_type == "resource_usage":
-        metrics_dataframe = create_resources_data_frame(blob_data, commit_dates, metrics_type, n)
+        data_frame = create_resources_data_frame(blob_data, commit_dates, commit_shas, commit_messages, metrics_type, n)
 
-    return {"table" : table_dataframe, 
-            "metrics" : metrics_dataframe}
+    return data_frame
 
-def create_image_details_data_frame(blob_data, commit_dates, metrics_type, n):
+def create_image_details_data_frame(blob_data, commit_dates, commit_shas, commit_messages, metrics_type, n):
     '''Creates pandas data frame for native image details.'''
 
     raw_image_data = [get_metrics(entry, metrics_type) for entry in blob_data]
-    image_sizes = [entry.get("total_bytes") for entry in raw_image_data if entry != 0]
-    code_area_sizes = [entry.get("code_area").get("bytes") for entry in raw_image_data if entry != 0]
-    image_heap_sizes = [entry.get("image_heap").get("bytes") for entry in raw_image_data if entry != 0]
+    image_sizes = [entry.get("total_bytes") / 1000000 for entry in raw_image_data if entry != 0]
+    code_area_sizes = [entry.get("code_area").get("bytes") / 1000000 for entry in raw_image_data if entry != 0]
+    image_heap_sizes = [entry.get("image_heap").get("bytes") / 1000000 for entry in raw_image_data if entry != 0]
     other = []
     for i in range (0, n):
-        other.append(int(image_sizes[i])-int(code_area_sizes[i])-int(image_heap_sizes[i]))
+        other.append(float(image_sizes[i])-float(code_area_sizes[i])-float(image_heap_sizes[i]))
     
 
     # Create a DataFrame for Seaborn
@@ -92,24 +85,26 @@ def create_image_details_data_frame(blob_data, commit_dates, metrics_type, n):
                                 "Image Size": list(reversed(image_sizes)), 
                                 "Code Area Size": list(reversed(code_area_sizes)),
                                 "Image Heap Size": list(reversed(image_heap_sizes)),
-                                "Other": list(reversed(other))})
+                                "Other": list(reversed(other)),
+                                "Commit Sha": list(reversed(commit_shas)),
+                                "Commit Message": list(reversed(commit_messages))})
 
     return image_data
 
-def create_analysis_results_data_frames(blob_data, commit_dates, metrics_type, n):
+def create_analysis_results_data_frames(blob_data, commit_dates, commit_shas, commit_messages, metrics_type, n):
     '''Returns an array of pandas data frames for the visualization of native image build analysis results.'''
 
     raw_analysis_results = [get_metrics(entry, metrics_type) for entry in blob_data]
-    types_data = create_single_ar_data_frame(raw_analysis_results, "types", commit_dates)
-    methods_data = create_single_ar_data_frame(raw_analysis_results, "methods", commit_dates)
-    classes_data = create_single_ar_data_frame(raw_analysis_results, "classes", commit_dates)
-    fields_data = create_single_ar_data_frame(raw_analysis_results, "fields", commit_dates)
+    types_data = create_single_ar_data_frame(raw_analysis_results, "types", commit_dates, commit_shas, commit_messages,)
+    methods_data = create_single_ar_data_frame(raw_analysis_results, "methods", commit_dates, commit_shas, commit_messages)
+    classes_data = create_single_ar_data_frame(raw_analysis_results, "classes", commit_dates, commit_shas, commit_messages)
+    fields_data = create_single_ar_data_frame(raw_analysis_results, "fields", commit_dates, commit_shas, commit_messages)
 
     analysis_results_data = [types_data, methods_data, classes_data, fields_data]
 
     return analysis_results_data
 
-def create_single_ar_data_frame(analysis_results, aspect, commit_dates):
+def create_single_ar_data_frame(analysis_results, aspect, commit_dates, commit_shas, commit_messages):
     '''Returns a single data frame. Requires the analysis_results json, the name of the aspect (types, classes, methods, fields), and the commit_dates.'''
 
     aspect_container = [entry.get(aspect) for entry in analysis_results]
@@ -122,27 +117,32 @@ def create_single_ar_data_frame(analysis_results, aspect, commit_dates):
                                 "Total": list(reversed(total)), 
                                 "Reflection": list(reversed(reflection)),
                                 "JNI": list(reversed(jni)),
-                                "Reachable": list(reversed(reachable))
+                                "Reachable": list(reversed(reachable)),
+                                "Commit Sha": list(reversed(commit_shas)),
+                                "Commit Message": list(reversed(commit_messages))
     })
 
-def create_resources_data_frame(blob_data, commit_dates, metrics_type, n):
+def create_resources_data_frame(blob_data, commit_dates, commit_shas, commit_messages, metrics_type, n):
     '''Creates pandas data frame for native image details.'''
 
     raw_resources_data = [get_metrics(entry, metrics_type) for entry in blob_data]
     memory = [entry.get("memory") for entry in raw_resources_data if entry != 0]
-    peak_rss_bytes = [entry.get("peak_rss_bytes") for entry in memory if entry != 0]
+    peak_rss_bytes = [entry.get("peak_rss_bytes") / 1000000 for entry in memory if entry != 0]
 
     gc = [entry.get("garbage_collection") for entry in raw_resources_data if entry != 0]
     gc_time = [entry.get("total_secs") for entry in gc if entry != 0]
     gc_count = [entry.get("count") for entry in gc if entry != 0]
 
-    # Create a DataFrame for Seaborn
-    peak_rss_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
-                                "Peak RSS": list(reversed(peak_rss_bytes)), })
+    cpu = [entry.get("cpu") for entry in raw_resources_data if entry != 0]
+    load = [entry.get("load") for entry in cpu if entry != 0]
+    total_cores = [entry.get("total_cores") for entry in cpu if entry != 0]
     
     # Create a DataFrame for Seaborn
-    gc_data = pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
+    return pd.DataFrame({ "Commit Dates": list(reversed(commit_dates)), 
                                 "GC Time": list(reversed(gc_time)), 
-                                "GC Count": list(reversed(gc_count))})
-
-    return [peak_rss_data, gc_data]
+                                "GC Count": list(reversed(gc_count)),
+                                "Peak RSS": list(reversed(peak_rss_bytes)),
+                                "CPU Load": list(reversed(load)),
+                                "Total Cores": list(reversed(total_cores)),
+                                "Commit Sha": list(reversed(commit_shas)),
+                                "Commit Message": list(reversed(commit_messages))})
