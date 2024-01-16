@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import plotly.subplots as sp
 from dateutil import parser
 
-def plot_data(build_data, metrics_type):
+def plot_data(build_data, branch, metrics_type):
     '''Creates plotly graph as html file. Requires the build data as pandas data frames as well as user's arguments.'''
     # Get current date and time
     current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -28,12 +28,12 @@ def plot_data(build_data, metrics_type):
         
         # Customize layout
         y_range = [-1, max(build_data["Image Size"]) + 1] 
-        fig.update_layout(title='Development of Native Image Sizes', xaxis_title='Commit Dates', yaxis_title='Size in MB', yaxis=dict(range=y_range))
+        fig.update_layout(title='Native Image Size History of Branch: ' + '\'' + branch +'\'', xaxis_title='Commit Dates', yaxis_title='Size in MB', yaxis=dict(range=y_range))
 
         # Show the interactive plot and save to html
         fig.show()
-        fig.write_html("output/image_details_{}.html".format(current_datetime))
-        print("Successfully created 'image_details_{}.html' under local_plotting/output".format(current_datetime))
+        fig.write_html("output/image_details_" + branch + "_{}.html".format(current_datetime))
+        print("Successfully created 'image_details_" + branch + "_{}.html' under local_plotting/output".format(current_datetime))
 
     elif metrics_type == "analysis_results":
 
@@ -53,11 +53,11 @@ def plot_data(build_data, metrics_type):
         fig.update_yaxes(range=[-300, max(build_data[3]["Total"]) + 500], row=2, col=2)
 
         # Update layout 
-        fig.update_layout(title_text='Build Analysis Results', yaxis_title='Amount')
+        fig.update_layout(title_text='Build Analysis Results of Branch: ' + '\'' + branch +'\'', yaxis_title='Amount')
         fig.show()
-        fig.write_html("output/analysis_results_{}.html".format(current_datetime))
+        fig.write_html("output/analysis_results_" + branch + "_{}.html".format(current_datetime))
   
-        print("Successfully created 'analysis_results_{}.html' under local_plotting/output".format(current_datetime))
+        print("Successfully created 'analysis_results_" + branch + "_{}.html' under local_plotting/output".format(current_datetime))
 
     elif metrics_type == "resource_usage":
         # Create subplot grid with 2 rows and 2 columns
@@ -89,11 +89,11 @@ def plot_data(build_data, metrics_type):
         fig.update_yaxes(range=[-0.5, max(build_data["CPU Load"]) + 1],title_text="CPU Load", row=2, col=2)
         
         # Update layout 
-        fig.update_layout(title_text='Resource Usage', showlegend=False)
+        fig.update_layout(title_text='Resource Usage of Branch: ' + '\'' + branch +'\'', showlegend=False)
         fig.show()
-        fig.write_html("output/resource_usage_{}.html".format(current_datetime))
+        fig.write_html("output/resource_usage_" + branch + "_{}.html".format(current_datetime))
 
-        print("Successfully created 'resource_usage_{}.html' under local_plotting/output".format(current_datetime))
+        print("Successfully created 'resource_usage_" + branch + "_{}.html' under local_plotting/output".format(current_datetime))
 
 def create_analysis_results_subplot(fig, index, build_data):
     '''Create a sub plot showing the development of one native image build's analysis results aspect.'''

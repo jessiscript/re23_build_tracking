@@ -39,7 +39,7 @@ def main():
     try:  
         n = int(n)  
         build_data = load_data(repo_path, n, branch, metrics_type)
-        plot_data(build_data, metrics_type)         
+        plot_data(build_data, branch, metrics_type)         
 
     except Exception as e: 
         print("The following exception returned: ", e)
