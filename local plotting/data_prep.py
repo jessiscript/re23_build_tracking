@@ -76,7 +76,7 @@ def create_image_details_data_frame(blob_data, commit_dates, commit_shas, commit
     code_area_sizes = [entry.get("code_area").get("bytes") / 1000000 for entry in raw_image_data if entry != 0]
     image_heap_sizes = [entry.get("image_heap").get("bytes") / 1000000 for entry in raw_image_data if entry != 0]
     other = []
-    for i in range (0, n):
+    for i in range (0, len(image_sizes)):
         other.append(float(image_sizes[i])-float(code_area_sizes[i])-float(image_heap_sizes[i]))
     
 
