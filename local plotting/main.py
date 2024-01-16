@@ -16,7 +16,7 @@ Example: python3 main.py . test_branch 40 image_details
 '''
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Retrieve native image size from last GitHub commit using setup-graalvm action.")
+    parser = argparse.ArgumentParser(description="Visualize local native image build data from last n GitHub commits using setup-graalvm action.")
     parser.add_argument("repo_path", help="Path to your GitHub repository")
     parser.add_argument("branch", help="Name of the branch")
     parser.add_argument("n", help="Last n commits")

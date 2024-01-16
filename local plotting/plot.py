@@ -1,7 +1,6 @@
 from datetime import datetime
 import plotly.graph_objects as go
 import plotly.subplots as sp
-from dateutil import parser
 
 def plot_data(build_data, branch, metrics_type):
     '''Creates plotly graph as html file. Requires the build data as pandas data frames as well as user's arguments.'''
@@ -14,16 +13,16 @@ def plot_data(build_data, branch, metrics_type):
         fig = go.Figure()
 
         # Add traces for teach dataset
-        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Image Size"], mode='markers', name='Image Size', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.add_trace(go.Scatter(x=build_data["Commit Date"], y=build_data["Image Size"], mode='markers', name='Image Size', text=build_data[["Commit Message", "Commit Sha"]].values))
         fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Total Image Size (MB):</b> %{y}')
 
-        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Code Area Size"], mode='markers', name='Code Area Size', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.add_trace(go.Scatter(x=build_data["Commit Date"], y=build_data["Code Area Size"], mode='markers', name='Code Area Size', text=build_data[["Commit Message", "Commit Sha"]].values))
         fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Code Area Size (MB):</b> %{y}')
 
-        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Image Heap Size"], mode='markers', name='Image Heap Size', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.add_trace(go.Scatter(x=build_data["Commit Date"], y=build_data["Image Heap Size"], mode='markers', name='Image Heap Size', text=build_data[["Commit Message", "Commit Sha"]].values))
         fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Image Heao Size (MB):</b> %{y}')
 
-        fig.add_trace(go.Scatter(x=build_data["Commit Dates"], y=build_data["Other"], mode='markers', name='Other', text=build_data[["Commit Message", "Commit Sha"]].values))
+        fig.add_trace(go.Scatter(x=build_data["Commit Date"], y=build_data["Other"], mode='markers', name='Other', text=build_data[["Commit Message", "Commit Sha"]].values))
         fig.update_traces(hovertemplate='<b>Commit Message:</b> %{text[0]}<br><b>Commit Sha:</b> %{text[1]}<br><b>Commit Time:</b> %{x}<br><b>Other (MB):</b> %{y}')
         
         # Customize layout
@@ -64,13 +63,13 @@ def plot_data(build_data, branch, metrics_type):
         fig = sp.make_subplots(rows=2, cols=2, subplot_titles=['GC Time', 'GC Count', 'Peak RSS', 'CPU Load'])
 
         # Create traces 
-        trace1 = go.Scatter(x=build_data["Commit Dates"], y=build_data["GC Time"], mode='markers', 
+        trace1 = go.Scatter(x=build_data["Commit Date"], y=build_data["GC Time"], mode='markers', 
                             name='GC Time', text=build_data[["Commit Message", "Commit Sha"]].values)
-        trace2 = go.Scatter(x=build_data["Commit Dates"], y=build_data["GC Count"], mode='markers', 
+        trace2 = go.Scatter(x=build_data["Commit Date"], y=build_data["GC Count"], mode='markers', 
                             name='GC Count', text=build_data[["Commit Message", "Commit Sha"]].values)
-        trace3 = go.Scatter(x=build_data["Commit Dates"], y=build_data["Peak RSS"], mode='markers', 
+        trace3 = go.Scatter(x=build_data["Commit Date"], y=build_data["Peak RSS"], mode='markers', 
                             name='Peak RSS', text=build_data[["Commit Message", "Commit Sha"]].values)
-        trace4 = go.Scatter(x=build_data["Commit Dates"], y=build_data["CPU Load"], mode='markers', 
+        trace4 = go.Scatter(x=build_data["Commit Date"], y=build_data["CPU Load"], mode='markers', 
                             name='CPU Load', text=build_data[["Commit Message", "Commit Sha", "Total Cores"]].values)
         
         fig.add_trace(trace1, row=1, col=1)
@@ -102,13 +101,13 @@ def create_analysis_results_subplot(fig, index, build_data):
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
     # Create traces 
-    trace1_1 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["Total"], mode='markers', 
+    trace1_1 = go.Scatter(x=build_data[index]["Commit Date"], y=build_data[index]["Total"], mode='markers', 
                           name='Total', marker=dict(color=colors[0]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
-    trace1_2 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["Reflection"], mode='markers', 
+    trace1_2 = go.Scatter(x=build_data[index]["Commit Date"], y=build_data[index]["Reflection"], mode='markers', 
                           name='Reflection', marker=dict(color=colors[1]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
-    trace1_3 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["JNI"], mode='markers', 
+    trace1_3 = go.Scatter(x=build_data[index]["Commit Date"], y=build_data[index]["JNI"], mode='markers', 
                           name='JNI', marker=dict(color=colors[2]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
-    trace1_4 = go.Scatter(x=build_data[index]["Commit Dates"], y=build_data[index]["Reachable"], mode='markers', 
+    trace1_4 = go.Scatter(x=build_data[index]["Commit Date"], y=build_data[index]["Reachable"], mode='markers', 
                           name='Reachable', marker=dict(color=colors[3]), text=build_data[index][["Commit Message", "Commit Sha"]].values)
 
     # Determine row and col given index
